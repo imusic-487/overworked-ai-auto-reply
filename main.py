@@ -38,12 +38,21 @@ def write_entry(path: str, text: str) -> None:
     """Create the output directory if needed and write the exact line.
 
     No trailing newline: the file holds exactly the entry, nothing more.
+    Reads the file back and verifies it byte for byte, so a partial or
+    mangled write is caught here instead of silently reaching the gate.
     """
     directory = os.path.dirname(path)
     if directory:
         os.makedirs(directory, exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as handle:
         handle.write(text)
+    with open(path, "r", encoding="utf-8", newline="") as handle:
+        written = handle.read()
+    if written != text:
+        raise ValueError(
+            f"verify failed: wrote {len(written)} characters, "
+            f"expected {len(text)}"
+        )
 
 
 def main() -> int:
